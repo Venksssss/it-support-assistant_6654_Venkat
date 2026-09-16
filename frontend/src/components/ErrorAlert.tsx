@@ -7,13 +7,11 @@ interface ErrorAlertProps {
 
 export const ErrorAlert: React.FC<ErrorAlertProps> = ({ message }) => {
   return (
-    <div className="error-panel">
-      <AlertCircle size={20} style={{ flexShrink: 0 }} />
+    <div className="error-panel" style={{ marginTop: '1.25rem' }}>
+      <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '0.05rem' }} />
       <div>
-        <strong style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.2rem' }}>
-          Unable to process support request
-        </strong>
-        <span style={{ fontSize: '0.85rem' }}>{message}</span>
+        <strong>Unable to process support request</strong>
+        <span>{message}</span>
       </div>
     </div>
   );

@@ -1,26 +1,43 @@
 import React from 'react';
-import { Cpu, Search, Sparkles } from 'lucide-react';
+import { Cpu, Search, Sparkles, Database } from 'lucide-react';
 
-export const LoadingState: React.FC = () => {
+interface LoadingStateProps {
+  /** 'submit' = new ticket being processed; 'fetch' = loading a historical ticket from DB */
+  mode?: 'submit' | 'fetch';
+}
+
+export const LoadingState: React.FC<LoadingStateProps> = ({ mode = 'submit' }) => {
+  if (mode === 'fetch') {
+    return (
+      <div className="loading-box" style={{ marginTop: '1.25rem' }}>
+        <div className="spinner" />
+        <p className="loading-heading">Loading ticket details</p>
+        <div className="loading-steps-list">
+          <div className="loading-step-row">
+            <Database size={14} color="#2dd4bf" />
+            <span>Fetching persisted ticket from database…</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="loading-box">
-      <div className="spinner"></div>
-      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#ffffff', marginBottom: '0.75rem' }}>
-        Processing Support Request
-      </h3>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', maxWidth: '320px' }}>
-        <div className="loading-steps" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Cpu size={16} color="#3b82f6" />
-          <span>Analyzing your technical question...</span>
+    <div className="loading-box" style={{ marginTop: '1.25rem' }}>
+      <div className="spinner" />
+      <p className="loading-heading">Processing your request</p>
+      <div className="loading-steps-list">
+        <div className="loading-step-row">
+          <Cpu size={14} color="#2dd4bf" />
+          <span>Analyzing technical question…</span>
         </div>
-        <div className="loading-steps" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Search size={16} color="#3b82f6" />
-          <span>Searching local IT knowledge base...</span>
+        <div className="loading-step-row">
+          <Search size={14} color="#2dd4bf" />
+          <span>Searching IT knowledge base…</span>
         </div>
-        <div className="loading-steps" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Sparkles size={16} color="#3b82f6" />
-          <span>Generating AI troubleshooting guide...</span>
+        <div className="loading-step-row">
+          <Sparkles size={14} color="#2dd4bf" />
+          <span>Generating AI troubleshooting guide…</span>
         </div>
       </div>
     </div>

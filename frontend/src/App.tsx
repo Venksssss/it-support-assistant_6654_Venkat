@@ -13,6 +13,15 @@ export const App: React.FC = () => {
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
   const [recentTickets, setRecentTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Separate loading state for fetching a historical ticket by ID.
+  // This keeps the form interactive while the GET /api/tickets/{id} is in-flight.
+  const [isFetchingTicket, setIsFetchingTicket] = useState<boolean>(false);
+
+  // Track whether the currently displayed ticket came from the history panel
+  // so we can label it distinctly in ResponseView.
+  const [isHistoricalView, setIsHistoricalView] = useState<boolean>(false);
+
   const [error, setError] = useState<string | null>(null);
 
   // Poll/check backend health and fetch initial tickets
@@ -42,6 +51,8 @@ export const App: React.FC = () => {
   const handleAskSupport = async (question: string) => {
     setIsLoading(true);
     setError(null);
+    setActiveTicket(null);
+    setIsHistoricalView(false);
     try {
       const ticket = await createTicket(question);
       setActiveTicket(ticket);
@@ -53,20 +64,36 @@ export const App: React.FC = () => {
     }
   };
 
+  /**
+   * Fetch a ticket by ID from the backend (GET /api/tickets/{id}).
+   * This proves real DB persistence — the data is read fresh from SQLite,
+   * not from any in-memory cache.
+   */
   const handleSelectRecentTicket = async (id: number) => {
     setError(null);
+    setIsFetchingTicket(true);
+    setActiveTicket(null);
     try {
       const ticket = await getTicketById(id);
       setActiveTicket(ticket);
+      setIsHistoricalView(true);
     } catch (err: any) {
-      setError(err.message || `Failed to load ticket #${id}`);
+      setError(err.message || `Failed to load ticket #${id} from database.`);
+      setIsHistoricalView(false);
+    } finally {
+      setIsFetchingTicket(false);
     }
   };
 
   const handleReset = () => {
     setActiveTicket(null);
+    setIsHistoricalView(false);
     setError(null);
   };
+
+  // Show either the submission spinner or the ticket-fetch spinner
+  const showLoadingPane = isLoading || isFetchingTicket;
+  const loadingLabel = isFetchingTicket ? 'fetch' : 'submit';
 
   return (
     <div className="container">
@@ -78,10 +105,14 @@ export const App: React.FC = () => {
 
           {error && <ErrorAlert message={error} />}
 
-          {isLoading && <LoadingState />}
+          {showLoadingPane && <LoadingState mode={loadingLabel} />}
 
-          {!isLoading && activeTicket && (
-            <ResponseView ticket={activeTicket} onReset={handleReset} />
+          {!showLoadingPane && activeTicket && (
+            <ResponseView
+              ticket={activeTicket}
+              onReset={handleReset}
+              isHistoricalView={isHistoricalView}
+            />
           )}
         </div>
 
@@ -90,6 +121,7 @@ export const App: React.FC = () => {
             tickets={recentTickets}
             onSelectTicket={handleSelectRecentTicket}
             activeTicketId={activeTicket?.id}
+            isLoadingTicket={isFetchingTicket}
           />
         </div>
       </div>

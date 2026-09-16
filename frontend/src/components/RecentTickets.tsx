@@ -1,63 +1,71 @@
 import React from 'react';
 import { Ticket } from '../types';
-import { History, ChevronRight } from 'lucide-react';
+import { Clock, ChevronRight, History } from 'lucide-react';
 
 interface RecentTicketsProps {
   tickets: Ticket[];
   onSelectTicket: (id: number) => void;
   activeTicketId?: number;
+  /** True while GET /api/tickets/{id} is in-flight — dims the list to prevent double-clicks */
+  isLoadingTicket?: boolean;
 }
 
-export const RecentTickets: React.FC<RecentTicketsProps> = ({ tickets, onSelectTicket, activeTicketId }) => {
-  if (!tickets || tickets.length === 0) {
-    return (
-      <div className="card">
-        <div className="card-title">
-          <History size={18} color="#3b82f6" />
-          Recent Tickets
-        </div>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          No support tickets created yet. Submit a question to get started.
-        </p>
-      </div>
-    );
-  }
-
+export const RecentTickets: React.FC<RecentTicketsProps> = ({
+  tickets,
+  onSelectTicket,
+  activeTicketId,
+  isLoadingTicket = false,
+}) => {
   return (
-    <div className="card">
-      <div className="card-title">
-        <History size={18} color="#3b82f6" />
-        Recent Tickets ({tickets.length})
+    <div className="sidebar-card">
+      <div className="sidebar-header">
+        <History size={13} />
+        {isLoadingTicket ? 'Fetching from database…' : 'Ticket History'}
+        {tickets.length > 0 && !isLoadingTicket && (
+          <span className="sidebar-header-count">{tickets.length}</span>
+        )}
       </div>
 
-      <div style={{ maxHeight: '420px', overflowY: 'auto' }}>
-        {tickets.map((ticket) => {
-          const isActive = ticket.id === activeTicketId;
-          return (
-            <div
-              key={ticket.id}
-              className="recent-ticket-item"
-              style={{
-                borderColor: isActive ? 'var(--accent-primary)' : undefined,
-                backgroundColor: isActive ? 'var(--bg-hover)' : undefined
-              }}
-              onClick={() => onSelectTicket(ticket.id)}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
-                  #{ticket.id}
-                </span>
-                <ChevronRight size={14} color="var(--text-muted)" />
+      {tickets.length === 0 ? (
+        <p className="sidebar-empty">
+          No tickets yet. Submit a question to get started.
+        </p>
+      ) : (
+        <div
+          className="sidebar-ticket-list"
+          style={isLoadingTicket ? { opacity: 0.45, pointerEvents: 'none' } : undefined}
+        >
+          {tickets.map((ticket) => {
+            const isActive = ticket.id === activeTicketId;
+            return (
+              <div
+                key={ticket.id}
+                className={`recent-ticket-item${isActive ? ' active' : ''}`}
+                onClick={() => !isLoadingTicket && onSelectTicket(ticket.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => !isLoadingTicket && e.key === 'Enter' && onSelectTicket(ticket.id)}
+                title={`View ticket #${ticket.id} — loads persisted data from database`}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span className="recent-ticket-num">TICKET #{ticket.id}</span>
+                  <ChevronRight size={12} color="var(--text-muted)" />
+                </div>
+                <p className="recent-ticket-question">{ticket.question}</p>
+                <div className="recent-ticket-meta">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Clock size={10} />
+                    {new Date(ticket.created_at).toLocaleString(undefined, {
+                      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    })}
+                  </span>
+                  <span className="recent-ticket-status">{ticket.status}</span>
+                </div>
               </div>
-              <p className="recent-ticket-question">{ticket.question}</p>
-              <div className="recent-ticket-meta">
-                <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
-                <span style={{ color: 'var(--success-text)' }}>{ticket.status}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
